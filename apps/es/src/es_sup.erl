@@ -22,9 +22,13 @@
 start_link() ->
     supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
-start_es(Config) ->
+start_es({Aggregate, CommandHandlers, EventHandlers}) ->
+    TabId = ets:new(aggregates, [protected, named_table, bag]),
+    true = ets:insert(TabId, {Aggregate,
+                              {command_handlers, CommandHandlers},
+                              {event_handlers, EventHandlers}}),
     CommandBus = {es_command_bus,
-                  {es_command_bus, start_link, [Config]},
+                  {es_command_bus, start_link, []},
                   permanent,
                   5000,
                   worker,
@@ -37,7 +41,6 @@ start_es(Config) ->
 
 %% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
 init([]) ->
-    io:fwrite("KJKJKJK"),
     AggregateSup = {es_aggregate_sup,
                     {es_aggregate_sup, start_link, []},
                     permanent,

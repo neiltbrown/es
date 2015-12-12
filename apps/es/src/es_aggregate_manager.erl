@@ -1,9 +1,9 @@
--module(es_command_bus).
+-module(es_aggregate_manager).
 
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, send/1]).
+-export([start_link/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -17,30 +17,21 @@
 %%% API
 %%%===================================================================
 
-send(Command) ->
-    gen_server:cast(?MODULE, Command).
-
-start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+start_link(Aggregate) ->
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [Aggregate], []).
 
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
 
-init([]) ->
+init([_Aggregate]) ->
     {ok, #state{}}.
 
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
 
-handle_cast(#{aggregate_id := AggregateId,
-              aggregate := Aggregate} = Command,
-            State) ->
-    AggregateManagerRef = 
-        es_aggregate_sup:start_aggregate(AggregateId, Aggregate),
-    
-    _ = es_aggregate_manager:handle_command(AggregateManagerRef, Command),
+handle_cast(_Msg, State) ->
     {noreply, State}.
 
 handle_info(_Info, State) ->
