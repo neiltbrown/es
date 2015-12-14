@@ -23,7 +23,7 @@ start_link() ->
     supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
 start_es({Aggregate, CommandHandlers, EventHandlers}) ->
-    TabId = ets:new(aggregates, [protected, named_table, bag]),
+    TabId = ets:new(aggregates, [protected, named_table, set]),
     true = ets:insert(TabId, {Aggregate,
                               {command_handlers, CommandHandlers},
                               {event_handlers, EventHandlers}}),

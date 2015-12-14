@@ -18,8 +18,8 @@ start_link() ->
     supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
 
-start_aggregate(AggregateId, Aggregate) ->
-    AggregateManager = {{es_aggregate_manager, AggregateId},
+start_aggregate(Aggregate, AggregateId) ->
+    AggregateManager = {aggregate_manager_ref(Aggregate, AggregateId),
                   {es_aggregate_manager, start_link, [Aggregate]},
                   permanent,
                   5000,
@@ -45,3 +45,7 @@ init([]) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+aggregate_manager_ref(Aggregate, AggregateId) ->
+    A = atom_to_binary(Aggregate, utf8),
+    <<A/binary, "@", AggregateId/binary>>.
