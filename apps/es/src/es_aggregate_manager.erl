@@ -41,7 +41,7 @@ handle_cast(Command, #state{command_handlers = CommandHandlers,
                         event_handlers = EventHandlers} = State) ->
     Events = lists:foldl(
                fun(Handler, A) ->
-                       [Handler:apply_command(Command) | A]
+                       [Handler:handle_command(Command) | A]
                end,
                [],
                CommandHandlers),
