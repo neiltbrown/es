@@ -33,7 +33,7 @@ handle_command(AggregateManager, Command) ->
 init([Aggregate]) ->
     self() ! {Aggregate, init_aggregate},
     self() ! {Aggregate, init_handlers},
-    EventMgrRef = gen_event:start_link(),
+    EventMgrRef = gen_event:start_link(), 
     {ok, #state{event_mgr_ref = EventMgrRef}}.
 
 handle_call(_Request, _From, State) ->
@@ -57,7 +57,7 @@ handle_info({Aggregate, init_aggregate}, State) ->
 handle_info({Aggregate, init_handlers}, #state{event_mgr_ref = EventMgrRef} = State) ->
     [{_, {_, CommandHandlers}, {_, EventHandlers}}] = 
         ets:lookup(aggregates, Aggregate),
-    _ = register_event_handlers(EventMgrRef, EventHandlers),
+    _ = es_event_bus:register_event_handlers(EventMgrRef, EventHandlers),
     {noreply, State#state{command_handlers = CommandHandlers,
                           event_handlers = EventHandlers}}.
 
@@ -70,13 +70,6 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
-register_event_handlers(EventMgrRef, EventHandlers) ->
-    lists:foreach(
-      fun(EventHandler) -> 
-              es_event_bus:add_handler(EventMgrRef, EventHandler, [])
-      end,
-      EventHandlers).    
 
 apply_command_handlers(Command, CommandHandlers) ->
     lists:foldl(
@@ -97,6 +90,6 @@ apply_events_to_aggregate(Events, Aggregate, AggregateState) ->
 publish_events(EventMgrRef, Events) ->
     lists:foreach(
       fun(Event) ->
-              gen_event:notify(EventMgrRef, Event)
+              es_event_bus:publish(EventMgrRef, Event)
       end,
       Events).
