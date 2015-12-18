@@ -1,6 +1,6 @@
 -module(es).
 
--export([start/0]).
+-export([start/0, start_es/1]).
 -export([stop/0]).
 
 start() ->
@@ -8,3 +8,6 @@ start() ->
 
 stop() ->
     application:stop(?MODULE).
+
+start_es(Config) ->
+    es_sup:start_es(Config).

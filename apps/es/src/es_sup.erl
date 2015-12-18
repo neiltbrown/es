@@ -22,11 +22,9 @@
 start_link() ->
     supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
-start_es({Aggregate, CommandHandlers, EventHandlers}) ->
+start_es(Config) ->
     TabId = ets:new(aggregates, [protected, named_table, set]),
-    true = ets:insert(TabId, {Aggregate,
-                              {command_handlers, CommandHandlers},
-                              {event_handlers, EventHandlers}}),
+    store_config(Config, TabId),
     CommandBus = {es_command_bus,
                   {es_command_bus, start_link, []},
                   permanent,
@@ -52,3 +50,13 @@ init([]) ->
 %%====================================================================
 %% Internal functions
 %%====================================================================
+
+store_config(Config, TabId) ->
+    lists:foreach(
+      fun({Aggregate, CommandHandlers, EventHandlers}) ->
+              true = ets:insert(TabId, {Aggregate,
+                              {command_handlers, CommandHandlers},
+                              {event_handlers, EventHandlers}})
+                  end,
+      Config
+     ).
