@@ -26,8 +26,9 @@ start_aggregate(Aggregate, AggregateId) ->
                   worker,
                   [es_aggregate_manager]},
     case supervisor:start_child(?SERVER, AggregateManager) of
-        {ok, P} -> P;
-        {already_started, P} -> P
+        {ok, _P} = Pid -> Pid;
+        {error, {already_started, P}} -> {ok, P};
+        {error, _Reason} = Error -> Error
     end.
 
 
