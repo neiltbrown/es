@@ -31,6 +31,7 @@ handle_command(AggregateManager, Command) ->
 %%%===================================================================
 
 init([Aggregate]) ->
+    error_logger:info_report("Init Agg Man", []),
     self() ! {Aggregate, init_aggregate},
     self() ! {Aggregate, init_handlers},
     EventMgrRef = gen_event:start_link(), 
@@ -44,12 +45,14 @@ handle_cast(Command, #state{command_handlers = CommandHandlers,
                             aggregate = Aggregate,
                             aggregate_state = AggregateState,
                             event_mgr_ref = EventMgrRef} = State) ->
+    error_logger:info_report("Handle command", []),
     Events = apply_command_handlers(Command, CommandHandlers),
     AggregateState = apply_events_to_aggregate(Events, Aggregate, AggregateState),
     publish_events(EventMgrRef, Events),
     {noreply, State}.
 
 handle_info({Aggregate, init_aggregate}, State) ->
+    error_logger:info_report("Init agg state", []),
     AggregateState = Aggregate:init(),
     {noreply, State#state{aggregate = Aggregate,
                           aggregate_state = AggregateState}};

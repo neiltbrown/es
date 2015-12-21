@@ -37,9 +37,10 @@ handle_call(_Request, _From, State) ->
 handle_cast({Aggregate,
             #{aggregate_id := AggregateId} = Command},
             State) ->
+    error_logger:info_report("Handle command ~p, -p", [Aggregate, AggregateId]),
     {ok, AggregateManagerRef} =
         es_aggregate_sup:start_aggregate(Aggregate, AggregateId),
-
+    
     _ = es_aggregate_manager:handle_command(AggregateManagerRef, Command),
     {noreply, State}.
 

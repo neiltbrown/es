@@ -1,4 +1,4 @@
 -module(es_event_handler).
 
--callback handle_command(Command :: map()) ->
+-callback handle_event(Event :: map()) ->
     ok | {error, Reason :: term()}.
