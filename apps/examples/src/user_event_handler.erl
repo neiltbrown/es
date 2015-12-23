@@ -6,6 +6,6 @@
          handle_event/1
         ]).
 
-handle_event(_Event) ->
-    error_logger:info_report("Applying event", []),
+handle_event(Event) ->
+    io:fwrite("Applying event ~n~p~n", [Event]),
     ok.

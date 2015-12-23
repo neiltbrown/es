@@ -21,19 +21,23 @@ start_link() ->
     gen_event:start_link({local, ?SERVER}).
 
 register_event_handlers(EventMgrRef, EventHandlers) ->
+    io:fwrite("Adding event handlers ~p~n", [EventHandlers]),
     gen_event:add_handler(EventMgrRef, ?MODULE, EventHandlers).
 
 publish(EventMgrRef, Event) ->
+    io:fwrite("publishing event"),
     gen_event:notify(EventMgrRef, Event).
 
 %%%===================================================================
 %%% gen_event callbacks
 %%%===================================================================
 
-init([EventHandlers]) ->
+init(EventHandlers) ->
     {ok, #state{event_handlers = EventHandlers}}.
 
-handle_event(_Event, State) ->
+handle_event(Event, #state{event_handlers = EventHandlers} = State) ->
+    io:fwrite("Notify event handlers ~p~n", [EventHandlers]),
+    notify_event_handlers(Event, EventHandlers),
     {ok, State}.
 
 handle_call(_Request, State) ->
@@ -52,3 +56,11 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+notify_event_handlers(Event, EventHandlers) ->
+    lists:foreach(
+      fun(Handler) ->
+              Handler:handle_event(Event)
+      end,
+      EventHandlers
+     ).

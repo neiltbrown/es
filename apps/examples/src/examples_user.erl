@@ -1,15 +1,16 @@
--module(user).
+-module(examples_user).
 
--behaviour(es_aggregate).
+%-behaviour(es_aggregate).
 
 -export([
-         init/0,
          apply_event/2,
-         replay/1
+         replay/1,
+         init/0,
+         hello/0
         ]).
 
 init() ->
-    error_logger:info_report("Init User", []),
+    %error_logger:info_report("Init User", []),
     #{}.
 
 apply_event(#{user_name := UserName}, State) ->
@@ -21,6 +22,9 @@ replay(Events) ->
       fun(Event, State) ->
               apply_event(Event, State)
       end,
-      Events,
-      init()
+      init(),
+      Events
      ).
+
+hello() ->
+    <<"Hello">>.

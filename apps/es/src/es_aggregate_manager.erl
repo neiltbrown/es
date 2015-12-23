@@ -34,7 +34,7 @@ init([Aggregate]) ->
     error_logger:info_report("Init Agg Man", []),
     self() ! {Aggregate, init_aggregate},
     self() ! {Aggregate, init_handlers},
-    EventMgrRef = gen_event:start_link(), 
+    {ok, EventMgrRef} = gen_event:start_link(), 
     {ok, #state{event_mgr_ref = EventMgrRef}}.
 
 handle_call(_Request, _From, State) ->
@@ -47,9 +47,9 @@ handle_cast(Command, #state{command_handlers = CommandHandlers,
                             event_mgr_ref = EventMgrRef} = State) ->
     error_logger:info_report("Handle command", []),
     Events = apply_command_handlers(Command, CommandHandlers),
-    AggregateState = apply_events_to_aggregate(Events, Aggregate, AggregateState),
+    AggregateState2 = apply_events_to_aggregate(Events, Aggregate, AggregateState),
     publish_events(EventMgrRef, Events),
-    {noreply, State}.
+    {noreply, State#state{aggregate_state = AggregateState2}}.
 
 handle_info({Aggregate, init_aggregate}, State) ->
     error_logger:info_report("Init agg state", []),
@@ -84,7 +84,7 @@ apply_command_handlers(Command, CommandHandlers) ->
 
 apply_events_to_aggregate(Events, Aggregate, AggregateState) ->
     lists:foldl(
-      fun(Event, A) ->
+      fun({_Status, _Replay, Event}, A) ->
               Aggregate:apply_event(Event, A)
       end,
       AggregateState,
@@ -92,7 +92,7 @@ apply_events_to_aggregate(Events, Aggregate, AggregateState) ->
 
 publish_events(EventMgrRef, Events) ->
     lists:foreach(
-      fun(Event) ->
+      fun({_, _, Event}) ->
               es_event_bus:publish(EventMgrRef, Event)
       end,
       Events).
