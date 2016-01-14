@@ -53,10 +53,8 @@ init([]) ->
 
 store_config(Config, TabId) ->
     lists:foreach(
-      fun({Aggregate, CommandHandlers, EventHandlers}) ->
-              true = ets:insert(TabId, {Aggregate,
-                              {command_handlers, CommandHandlers},
-                              {event_handlers, EventHandlers}})
+      fun(#{aggregate := Aggregate} = AggregateConfig) ->
+              true = ets:insert(TabId, {Aggregate, AggregateConfig})
                   end,
       Config
      ).
