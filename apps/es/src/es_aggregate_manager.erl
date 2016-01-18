@@ -33,7 +33,7 @@ handle_command(AggregateManager, Command) ->
 
 init([Aggregate]) ->
     error_logger:info_report("Init Agg Man", []),
-    [Config] = ets:lookup(aggregates, Aggregate),
+    [{Aggregate, Config}] = ets:lookup(aggregates, Aggregate),
     self() ! {Config, init_aggregate},
     self() ! {Config, init_handlers},
     self() ! {Config, init_store},
@@ -51,7 +51,8 @@ handle_cast(Command, #state{command_handlers = CommandHandlers,
                             event_store = EventStore} = State) ->
     error_logger:info_report("Handle command", []),
     Events = apply_command_handlers(Command, CommandHandlers),
-    store_events(Events, EventStore),
+    io:fwrite("~p", Events),
+    _ = store_events(Events, EventStore),
     AggregateState2 = apply_events_to_aggregate(Events,
                                                 Aggregate,
                                                 AggregateState),
@@ -88,22 +89,23 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 
 apply_command_handlers(Command, CommandHandlers) ->
-    lists:foldl(
-      fun(Handler, A) ->
-              [Handler:handle_command(Command) | A]
-      end,
-      [],
-      CommandHandlers).
+    DeepList = lists:foldl(
+                 fun(Handler, A) ->
+                         [Handler:handle_command(Command) | A]
+                 end,
+                 [],
+                 CommandHandlers),
+    lists:flatten(DeepList).
 
 store_events(Events, EventStore) ->
-    lists:map(fun({_Replay, Event}) ->
+    lists:map(fun(Event) ->
                       EventStore:store(Event)
               end,
               Events).
 
 apply_events_to_aggregate(Events, Aggregate, AggregateState) ->
     lists:foldl(
-      fun({_Replay, Event}, A) ->
+      fun(Event, A) ->
               Aggregate:apply_event(Event, A)
       end,
       AggregateState,
@@ -111,7 +113,7 @@ apply_events_to_aggregate(Events, Aggregate, AggregateState) ->
 
 publish_events(EventMgrRef, Events) ->
     lists:foreach(
-      fun({_, _, Event}) ->
+      fun(Event) ->
               es_event_bus:publish(EventMgrRef, Event)
       end,
       Events).

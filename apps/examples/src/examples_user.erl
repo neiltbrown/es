@@ -5,8 +5,7 @@
 -export([
          apply_event/2,
          replay/1,
-         init/0,
-         hello/0
+         init/0
         ]).
 
 init() ->
@@ -25,6 +24,3 @@ replay(Events) ->
       init(),
       Events
      ).
-
-hello() ->
-    <<"Hello">>.

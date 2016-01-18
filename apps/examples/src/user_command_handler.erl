@@ -8,4 +8,4 @@
 
 handle_command(_Command) ->
     error_logger:info_report("Handling command", []),
-    {handled, replay, #{user_name => "Neil"}}.
+    [#{aggregate_id => "user123", user_name => "Neil"}].

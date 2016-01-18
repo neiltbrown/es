@@ -16,7 +16,9 @@
 %%====================================================================
 
 start(_StartType, _StartArgs) ->
-    Config = [{examples_user, [user_command_handler], [user_event_handler]}],
+    Config = [#{aggregate => examples_user,
+                command_handlers =>[user_command_handler],
+                event_handlers => [user_event_handler]}],
     es:start_es(Config),
     'examples_sup':start_link().
 
