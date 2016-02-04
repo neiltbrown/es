@@ -16,7 +16,7 @@
                 event_mgr_ref = undefined,
                 command_handlers = [],
                 event_handlers = [],
-                event_store = es_store_ets}).
+                event_store = undefined}).
 
 %%%===================================================================
 %%% API
@@ -34,9 +34,11 @@ handle_command(AggregateManager, Command) ->
 init([Aggregate]) ->
     error_logger:info_report("Init Agg Man", []),
     [{Aggregate, Config}] = ets:lookup(aggregates, Aggregate),
+    self() ! {Config, event_store},
     self() ! {Config, init_aggregate},
     self() ! {Config, init_handlers},
-    self() ! {Config, init_store},
+    self() ! {Config, init_replay},
+    
     {ok, EventMgrRef} = gen_event:start_link(), 
     {ok, #state{event_mgr_ref = EventMgrRef}}.
 
@@ -72,11 +74,15 @@ handle_info({#{command_handlers := CommandHandlers,
     {noreply, State#state{command_handlers = CommandHandlers,
                           event_handlers = EventHandlers}};
 
-handle_info({Config, init_store},
-            #state{event_store = DefaultStore} = State) ->
-    EventStore = maps:get(event_store, Config, DefaultStore),
-    EventStore:init(),
-    {noreply, State#state{event_store = EventStore}}.
+handle_info({#{event_store := EventStore}, event_store}, State) ->
+    {noreply, State#state{event_store = EventStore}};
+
+handle_info({#{aggregate := Aggregate}, init_replay},
+            #state{event_store = EventStore,
+                   aggregate_state = AggregateState} = State) ->
+    Events = EventStore:stream(),
+    AggregateState2 = apply_events_to_aggregate(Aggregate, Events, AggregateState),
+    {noreply, State#state{aggregate_state = AggregateState2}}.
 
 terminate(_Reason, _State) ->
     ok.
@@ -117,3 +123,4 @@ publish_events(EventMgrRef, Events) ->
               es_event_bus:publish(EventMgrRef, Event)
       end,
       Events).
+

@@ -10,5 +10,5 @@
 -callback store(event()) ->
     ok | error().
 
--callback stream() ->
+-callback stream(AggregateId :: term()) ->
     [event()].

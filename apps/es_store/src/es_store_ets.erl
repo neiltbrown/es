@@ -5,7 +5,7 @@
 -export([
          init/0,
          store/1,
-         stream/0
+         stream/1
         ]).
 
 init() ->
@@ -19,5 +19,5 @@ store(#{aggregate_id := AggregateId} = Event) ->
             ets:insert(event_store, {AggregateId, [Event | Events]})
     end.
 
-stream() ->
-    [].
+stream(AggregateId) ->
+    ets:lookup(event_store, AggregateId).
